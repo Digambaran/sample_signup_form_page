@@ -1,0 +1,13 @@
+{
+  "name": "sample_signup_form_page",
+  "type": "ui-elements",
+  "source": {
+    "https": "https://github.com/Digambaran/sample_signup_form_page",
+    "ssh": "git@github.com:Digambaran/sample_signup_form_page.git"
+  },
+  "language": "js",
+  "start": "npx webpack-dev-server",
+  "build": "npx webpack",
+  "postPull": "npm i",
+  "standAloneBlock": false
+}
