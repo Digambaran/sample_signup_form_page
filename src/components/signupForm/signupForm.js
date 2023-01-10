@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import debounce from "lodash.debounce";
 import { useForm } from "react-hook-form";
 import ClosedEye from "../closedeye";
 import OpenEye from "../openeye";
@@ -11,20 +12,12 @@ import ErrorCross from "../cross";
  * @param {{msg:string}} param0
  * @returns
  */
-const ErrorMsg = ({ msg }) => (
-  <span className="text-error text-[11px] pt-2 font-medium ">{msg}</span>
-);
+const ErrorMsg = ({ msg }) => <span className="text-error text-[11px] pt-2 font-medium ">{msg}</span>;
 
 const SignupForm = () => {
-  const usernameAvailabilityApi = `${
-    process.env.BLOCK_FUNCTION_URL || "http://localhost:5000"
-  }/username_verify`;
-  const signupSubmitApi = `${
-    process.env.BLOCK_FUNCTION_URL || "http://localhost:5000"
-  }/sample_shield_signup_fn`;
-  const otpVerifyPageLocation = `${
-    process.env.BLOCK_ENV_URL_ || "http://localhost:4010"
-  }`;
+  const usernameAvailabilityApi = `${process.env.BLOCK_FUNCTION_URL || "http://localhost:5000"}/username_verify`;
+  const signupSubmitApi = `${process.env.BLOCK_FUNCTION_URL || "http://localhost:5000"}/sample_shield_signup_fn`;
+  const otpVerifyPageLocation = `${process.env.BLOCK_ENV_URL_ || "http://localhost:4010"}`;
 
   const specialChars = /[`!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/;
   const emailRegx =
@@ -43,27 +36,29 @@ const SignupForm = () => {
     getValues,
     getFieldState,
     formState: { isValidating, errors, isValid },
-  } = useForm();
+  } = useForm({ mode: "onChange" });
 
-  useEffect(() => {
-    const subscription = watch((_values, { name }) => {
-      /**
-       * To trigger validation 800ms after user has stopped typing.
-       * To avoid multiple network calls
-       */
-      if (timeout) {
-        clearTimeout(timeout);
-        timeout = null;
-      }
-      timeout = setTimeout(() => {
-        trigger(name);
-      }, 800);
-    });
-    return () => {
-      clearTimeout(timeout);
-      subscription.unsubscribe();
-    };
-  }, [watch]);
+  // const subscription = watch((_values, { name }) => {
+  //   trigger(name);
+
+  //   /**
+  //    * To trigger validation 800ms after user has stopped typing.
+  //    * To avoid multiple network calls
+  //    */
+  //   // if (timeout) {
+  //   //   clearTimeout(timeout);
+  //   //   timeout = null;
+  //   // }
+  //   // timeout = setTimeout(() => {
+  //   //   trigger(name);
+  //   // }, 800);
+  // });
+  // useEffect(() => {
+  //   return () => {
+  //     clearTimeout(timeout);
+  //     subscription.unsubscribe();
+  //   };
+  // }, [watch]);
 
   return (
     <form
@@ -83,6 +78,9 @@ const SignupForm = () => {
         }
         if (_f.status === 303) {
           setError("email", { type: "alreadySignedUp" }, { shouldFocus: true });
+        }
+        if (_f.status === 500) {
+          setError("email", { type: "serverError" }, { shouldFocus: true });
         }
       })}
     >
@@ -110,18 +108,11 @@ const SignupForm = () => {
             },
           })}
         />
-        {errors.email && errors.email.type === "validEmail" && (
-          <ErrorMsg msg="Invalid email" />
-        )}
-        {errors.email && errors.email.type === "alreadySignedUp" && (
-          <ErrorMsg msg="Already signedup" />
-        )}
+        {errors.email && errors.email.type === "validEmail" && <ErrorMsg msg="Invalid email" />}
+        {errors.email && errors.email.type === "alreadySignedUp" && <ErrorMsg msg="Already signedup" />}
       </div>
       <div className="mb-6">
-        <label
-          htmlFor="username"
-          className="text-black font-almost-bold text-sm"
-        >
+        <label htmlFor="username" className="text-black font-almost-bold text-sm">
           Username*
         </label>
         <div className="w-full relative">
@@ -143,27 +134,35 @@ const SignupForm = () => {
             id="username"
             {...register("username", {
               required: true,
-              validate: async (value) => {
+              validate: (value) => {
+                console.log("in validate");
                 if (value.length < 3) return false;
-                try {
-                  const _j = await fetch(usernameAvailabilityApi, {
-                    method: "POST",
-                    body: JSON.stringify({ username: value }),
-                  });
-                  const d = await _j.json();
-                  return d.available;
-                } catch (_err) {
-                  return false;
-                }
+                return new Promise((resolve) => {
+                  debounce(
+                    async (username) => {
+                      try {
+                        const _j = await fetch(usernameAvailabilityApi, {
+                          method: "POST",
+                          body: JSON.stringify({ username }),
+                        });
+                        const d = await _j.json();
+                        resolve(d.available);
+                      } catch (_err) {
+                        resolve(false);
+                      }
+                    },
+                    8000,
+                    { leading: true }
+                  )(value);
+                });
               },
             })}
           />
-          {getFieldState("username").isTouched &&
-            !getFieldState("username").error && (
-              <div className={`absolute w-8 h-full right-1 top-6`}>
-                <GreenTick />
-              </div>
-            )}
+          {getFieldState("username").isTouched && !getFieldState("username").error && (
+            <div className={`absolute w-8 h-full right-1 top-6`}>
+              <GreenTick />
+            </div>
+          )}
           {errors.username && (
             <div className={`absolute w-8 h-full right-1 top-6`}>
               <ErrorCross />
@@ -174,11 +173,7 @@ const SignupForm = () => {
           <ErrorMsg msg="Username already in use" />
         ) : (
           getValues("username") &&
-          !isValidating && (
-            <span className="text-success text-[11px] pt-2 font-medium ">
-              Username is available
-            </span>
-          )
+          !isValidating && <span className="text-success text-[11px] pt-2 font-medium ">Username is available</span>
         )}
       </div>
       <div className="mb-6">
@@ -213,17 +208,13 @@ const SignupForm = () => {
             })}
           />
           <div
-            className={`absolute w-8 h-full right-1 cursor-pointer ${
-              showPassword ? "top-7" : "top-8"
-            }`}
+            className={`absolute w-8 h-full right-1 cursor-pointer ${showPassword ? "top-7" : "top-8"}`}
             onClick={() => setShowPassword(!showPassword)}
           >
             {showPassword ? <OpenEye /> : <ClosedEye />}
           </div>
         </div>
-        {errors.password && errors.password.type === "length" && (
-          <ErrorMsg msg="password needs to be atlest 8 chars" />
-        )}
+        {errors.password && errors.password.type === "length" && <ErrorMsg msg="password needs to be atlest 8 chars" />}
         {errors.password && errors.password.type === "capitalLetters" && (
           <ErrorMsg msg="password needs to include atleast one capital letter" />
         )}
@@ -246,17 +237,11 @@ const SignupForm = () => {
             </label>
             <div className="text-grey text-xs">
               By signing up you agree to Appblocks'
-              <a
-                className="text-primary cursor-pointer hover:underline underline-offset-4 focus:outline-none"
-                href="#"
-              >
+              <a className="text-primary cursor-pointer hover:underline underline-offset-4 focus:outline-none" href="#">
                 Terms of use{" "}
               </a>
               and{" "}
-              <a
-                className="text-primary cursor-pointer hover:underline underline-offset-4 focus:outline-none"
-                href="#"
-              >
+              <a className="text-primary cursor-pointer hover:underline underline-offset-4 focus:outline-none" href="#">
                 privacy policy
               </a>
             </div>
