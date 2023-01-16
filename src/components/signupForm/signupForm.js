@@ -110,6 +110,7 @@ const SignupForm = () => {
         />
         {errors.email && errors.email.type === "validEmail" && <ErrorMsg msg="Invalid email" />}
         {errors.email && errors.email.type === "alreadySignedUp" && <ErrorMsg msg="Already signedup" />}
+        {errors.email && errors.email.type === "serverError" && <ErrorMsg msg="server error" />}
       </div>
       <div className="mb-6">
         <label htmlFor="username" className="text-black font-almost-bold text-sm">
@@ -135,7 +136,6 @@ const SignupForm = () => {
             {...register("username", {
               required: true,
               validate: (value) => {
-                console.log("in validate");
                 if (value.length < 3) return false;
                 return new Promise((resolve) => {
                   debounce(
@@ -177,7 +177,7 @@ const SignupForm = () => {
         )}
       </div>
       <div className="mb-6">
-        <label htmlFor="password" class="text-black font-almost-bold text-sm">
+        <label htmlFor="password" className="text-black font-almost-bold text-sm">
           Password*
         </label>
         <div className="w-full relative">
@@ -231,19 +231,34 @@ const SignupForm = () => {
       <div className="flex flex-col button-wrapper w-full mt-6">
         <div className="flex items-center mb-6">
           <div className="flex items-center max-w-full">
-            <label className="float-left flex cursor-pointer items-center">
-              <input className="peer hidden" type="checkbox" id="acceptTerms" />
-              <span className="chkbox-icon border-ab-disabled float-left mr-2 h-5 w-5 flex-shrink-0 rounded border bg-white"></span>
-            </label>
-            <div className="text-grey text-xs">
-              By signing up you agree to Appblocks'
-              <a className="text-primary cursor-pointer hover:underline underline-offset-4 focus:outline-none" href="#">
-                Terms of use{" "}
-              </a>
-              and{" "}
-              <a className="text-primary cursor-pointer hover:underline underline-offset-4 focus:outline-none" href="#">
-                privacy policy
-              </a>
+            <div className="flex items-center">
+              <input
+                {...register("acceptTerms", {
+                  required: true,
+                })}
+                id="acceptTerms"
+                type="checkbox"
+                value=""
+                className="w-8 h-8 mr-2 rounded cursor-pointer"
+              />
+              <label htmlFor="acceptTerms" className="">
+                <div className="text-grey text-xs">
+                  By signing up you agree to Appblocks'
+                  <a
+                    className="text-primary cursor-pointer hover:underline underline-offset-4 focus:outline-none"
+                    href="#"
+                  >
+                    &nbsp;Terms of use
+                  </a>
+                  &nbsp;and&nbsp;
+                  <a
+                    className="text-primary cursor-pointer hover:underline underline-offset-4 focus:outline-none"
+                    href="#"
+                  >
+                    privacy policy
+                  </a>
+                </div>
+              </label>
             </div>
           </div>
         </div>
