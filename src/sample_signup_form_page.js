@@ -1,6 +1,6 @@
 import React from "react";
 import "./assets/css/main.css";
-import SignupForm from "./components/signupForm/signupForm";
+import SignupForm from "./components/signupForm";
 // import env from 'env'
 export const Sample_signup_form_page = () => {
   return (

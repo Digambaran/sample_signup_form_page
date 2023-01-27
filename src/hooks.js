@@ -1,31 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
-// export default function useDebounce(value, delay) {
-//   const [debouncedValue, setDebouncedValue] = useState(value);
-
-//   useEffect(() => {
-//     const handler = setTimeout(() => {
-//       setDebouncedValue(value);
-//     }, delay);
-
-//     return () => {
-//       console.log("CLEARING");
-//       clearTimeout(handler);
-//     };
-//   }, [value]);
-
-//   return debouncedValue;
-// }
-
-export default function useAsyncValidate(name, validations, value) {
-  const controller = useRef();
-  const res = useRef();
-  const timedout = useRef(false);
-  const attempt = useRef(0);
-  const error = useRef();
-  const hasMore = useRef(true);
-  const suspenseStatus = useRef("pending");
-  const suspender = useRef();
-  const mounted = useRef(false);
-  useEffect(() => {}, value);
+export default function useDebounce(id, field, value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  // console.log(`id:${id}`);
+  // console.log(`value:${value}`);
+  // console.log(`field:${field}`);
+  // console.log(`delay:${delay}`);
+  let timeoutId = id;
+  useEffect(() => {
+    console.log(`value changed`);
+    id = setTimeout(() => {
+      console.log("done");
+    }, delay);
+  }, [value]);
+  useEffect(() => {
+    console.log(`field change`);
+  }, [field]);
+  console.log("returned");
+  return { id, debouncedValue };
 }
