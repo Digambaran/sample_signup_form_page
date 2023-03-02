@@ -133,7 +133,7 @@ const UsernameField = ({ fieldStyles }) => {
   useEffect(() => {
     debouncedValue && trigger("username");
   }, [debouncedValue]);
-  console.log("rerenfder");
+  console.log("username rerendered");
   return (
     <div className="mb-6">
       <label htmlFor="username" className="text-black font-almost-bold text-sm">
@@ -187,6 +187,8 @@ const UsernameField = ({ fieldStyles }) => {
 
 function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
+
+  console.log("debounce called:", debouncedValue);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedValue(value), delay || 500);
